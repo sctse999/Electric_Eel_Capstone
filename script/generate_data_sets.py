@@ -107,7 +107,7 @@ if __name__ == '__main__':
 #         print "Done!"
     NUM_CLASSES = 90
     TRAFFIC_LIGHT_CLASS = 10
-    THRESHOLD = 0.89
+    THRESHOLD = 0.6
     # load the model into memory
     detection_graph = tf.Graph()
     with detection_graph.as_default():
@@ -162,5 +162,5 @@ if __name__ == '__main__':
                                 record = create_record(boxes[j], l, image_np, img)
                                 writer.write(record.SerializeToString())
                             else:
-                                print("Rejected: ", index, img)
+                                print("Rejected: ", index, img, scores[j])
     writer.close()
