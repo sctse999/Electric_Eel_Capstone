@@ -161,4 +161,6 @@ if __name__ == '__main__':
                                       "new label:", l)
                                 record = create_record(boxes[j], l, image_np, img)
                                 writer.write(record.SerializeToString())
+                            else:
+                                print("Rejected: ", index, img)
     writer.close()
