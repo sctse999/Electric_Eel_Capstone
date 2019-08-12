@@ -37,6 +37,17 @@ INPUT_FILE = args.input_file
 OUTPUT_FILE = args.output_file
 # incsv = os.getcwd()+'data/'+ args.infilename
 
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 def encode_image_array_as_jpg_str(image):
     """Encodes a numpy array into a JPEG string.
 
@@ -135,6 +146,9 @@ if __name__ == '__main__':
             num_detections = detection_graph.get_tensor_by_name('num_detections:0')
             # read file
             df = pd.read_csv(INPUT_FILE)
+            accepted = 0
+            rejected = 0
+            warning  = 0
             for index, row in df.iterrows():
                 img = row['image_path'].replace("'", "")
                 l = row['label']
@@ -153,14 +167,34 @@ if __name__ == '__main__':
                     classes = np.squeeze(classes).astype(np.int32)
                     boxes = np.squeeze(boxes)
                     scores = np.squeeze(scores)
+
+                    tl_detection_count = 0
+                    max_score = 0
                     for j in range(len(classes)):
                         if classes[j] == TRAFFIC_LIGHT_CLASS:
                             if scores[j] is not None and scores[j] > THRESHOLD:
-                                print("writing record:", index, img,
-                                      "score:", scores[j],
-                                      "new label:", l)
+                                # print("writing record:", index, img,
+                                #       "score:", scores[j],
+                                #       "new label:", l)
                                 record = create_record(boxes[j], l, image_np, img)
                                 writer.write(record.SerializeToString())
-                            else:
-                                print("Rejected: ", index, img, scores[j])
+                                tl_detection_count += 1
+                            max_score = max(max_score, scores[j])
+
+                    if (tl_detection_count == 0):
+                        print(bcolors.FAIL+ "Rejected: {} {} {} {}".format(index, img, tl_detection_count, max_score) + bcolors.ENDC)
+                        rejected +=1
+                    elif (tl_detection_count == 1):
+                        print( bcolors.OKGREEN + "Accepted: {} {} {} {}".format(index, img, tl_detection_count, max_score)  + bcolors.ENDC)
+                        accepted += 1                    
+                    elif (tl_detection_count == 2):
+                        print( bcolors.WARNING + "Warning: {} {} {} {}".format(index, img, tl_detection_count, max_score)  + bcolors.ENDC)
+                        warning += 1                      
+                        
+            print("Accepted: ", accepted)
+            print("Warning: ", warning)            
+            print("Rejected: ", rejected)
+
+
+
     writer.close()
